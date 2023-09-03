@@ -1,23 +1,16 @@
-def extended_gcd(p, q):
-    ##if p == 0:
-    ##    return (q, 0, 1)
-    ##else:
-     ##   gcd, x, y = extended_gcd(q % p, p)
-      ##  return (gcd, y - (q // p) * x, x)
-    if p == 0:
-        return q, 0, 1
-    gcd, x1, y1 = extended_gcd(q % p, p)
-
-    x = y1 - (p//q) * x1
-    y = x1
-
-    return gcd, x, y
-
-
 def mod_inverse(e, phi):
-    for d in range(3, phi, 2):
-        return d if (d * e) % phi == 1 else None
-    raise ValueError("There is no modular inverse.")
+    m0, x, y = phi, 1, 0
+    if phi == 1: return 0
+
+    while (e > 1):
+        q = e // phi 
+        t = phi
+        phi = e % phi
+        e, t = t, y
+        y = x - q * y
+        x = t
+    if x < 0: x = x + m0
+    return x
 
 
 def prime_gen():
@@ -26,12 +19,11 @@ def prime_gen():
     return (p * q, (p - 1) * (q - 1))
 
 
-def keygen(e=3):
+def keygen(e=65537):
     n, phi = prime_gen()
     d = mod_inverse(e, phi)
-    #gcd, x, _ = extended_gcd(e, phi)
-    #if gcd != 1:
-    #    raise ValueError("There is no modular inverse.")
+    if not d:
+        raise ValueError("There is no modular inverse")
     return (n, e, d)
 
 
@@ -44,10 +36,11 @@ def process_char(n, key, char):
 
 def encrypt(n, e, msg):
     ciphertext = [process_char(n, e, ord(x)) for x in msg]
-    return(bytes(ciphertext))
+    return(bytes(ciphertext).hex())
 
 
 def decrypt(n, d, ciphertext):
+    ciphertext = bytes.fromhex(ciphertext)
     byte_array = [e for e in ciphertext]
     msg = [process_char(n, d, x) for x in byte_array]
     return(bytes(msg).decode("utf-8"))
@@ -63,12 +56,12 @@ def main():
         choice = int(input("Select a number: "))
         match choice:
             case 1:
-                msg = str(input("Write a message to encrypt: "))
+                msg = input("Write a message to encrypt: ")
                 print(f"n = {n}, public_key = {e}")
                 res = encrypt(n, e, msg)
                 print(f"CIPHERTEXT: {res}")
             case 2:
-                ciphertext = bytes(input("Ciphertext to decrypt: "), "utf-8")
+                ciphertext = input("Ciphertext to decrypt: ")
                 print(f"n = {n}, public_key= {e}")
                 res = decrypt(n, d, ciphertext)
                 print(f"Message: {res}")
